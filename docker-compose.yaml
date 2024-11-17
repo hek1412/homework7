@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:12.21
+    container_name: Aleksandrov
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: Aleksandrov
+    ports:
+      - "5432:5432"
+    volumes:
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    restart: unless-stopped
+    networks:
+      - postgres-python
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+    command: postgres
+
+  app:
+    build: ./app
+    volumes:
+      - ./app:/app
+    working_dir: /app
+    networks:
+      - postgres-python
+    command: python3 run.py
+    depends_on:
+      postgres:
+        condition: service_healthy
+networks:
+  postgres-python:
